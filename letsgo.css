@@ -1,0 +1,161 @@
+/* Colours */
+
+:root {
+
+    /* ONT blue */
+    --brand-primary: #0084a9;
+    --brand-primary-m: #0084a9a6;
+    --brand-primary-l: #0084a91a;
+
+    /* ONT secondary blue  */
+    --brand-secondary: #90C6E7;
+
+    /* ONT tertiary blue */
+    --brand-tertiary: #006271;
+
+    /* ONT black */
+    --brand-black: #333333;
+
+    /* ONT grey */
+    --brand-grey: #666666;
+    --brand-grey-l: #6666661f;
+
+    /* ONT dark grey */
+    --brand-dark-grey: #455560;
+
+    /* ONT light grey */
+    --brand-light-grey: #B5AEA7;
+
+    /* Red */
+    --brand-red: #BC4B51;
+    --brand-red-m: #BC4B51a6;
+
+    /* Green */
+    --brand-green: #8CB369;
+
+    /* Pink */
+    --brand-pink: #A60067;
+
+}
+
+/* General styling */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    clear: left;
+}
+
+/* Table styling */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+table tr:hover {
+    background-color: var(--brand-primary-l);
+}
+
+table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #0084A9;
+    color: white;
+}
+
+/* Alert styles */
+.alert {
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-danger {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+.alert-warning {
+    color: #8a6d3b;
+    background-color: #fcf8e3;
+    border-color: #faebcc;
+}
+
+.alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+.alert-info {
+    color: #31708f;
+    background-color: #d9edf7;
+    border-color: #bce8f1;
+}
+
+.alert p {
+    margin: 0;
+}
+
+/* Markdown styles */
+.markdown {
+    margin: 20px 0;
+}
+
+.markdown h1, .markdown h2, .markdown h3, .markdown h4, .markdown h5, .markdown h6 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.markdown p {
+    margin: 0 0 10px;
+}
+
+/* Additional utility classes */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Header */
+
+.header-container {
+    background-color: #0288a7;
+    color: white;
+    padding: 2px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header1 {
+    font-family: Arial, sans-serif; 
+    font-size: 40px;
+    margin: 0;
+}
+
+.header2 {
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    margin: 0;
+}
+
+.headerlogo {
+    height: 80px;
+    width: auto;
+}
+
