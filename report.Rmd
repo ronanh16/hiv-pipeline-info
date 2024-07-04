@@ -26,9 +26,7 @@ library(readr)
 library(kableExtra)
 library(DT)
 library(dplyr)
-library(htmltools)
-library(htmlwidgets)
-input <- readr::read_tsv("C:/Internship/barcode06_all_report.tsv", show_col_types=FALSE)
+input <- readr::read_tsv("all_report.tsv", show_col_types=FALSE)
 
 #this is pre-processing of the newly imported data
 data <- input[complete.cases(input),]
