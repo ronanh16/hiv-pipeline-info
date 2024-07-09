@@ -1,0 +1,673 @@
+---
+output: 
+  html_document:
+    css: "letsgo.css"
+---
+
+::: header-container
+<div>
+
+::: header1
+Patient Report
+:::
+
+::: header2
+[Details on the pipeline and how results are generated]
+:::
+
+</div>
+
+<img src="uos-logo.png" class="headerlogo" width="500"/>
+:::
+
+```{r, include=FALSE}
+#this is calling packages and opening data
+library(readr)
+library(kableExtra)
+library(DT)
+library(dplyr)
+input <- readr::read_tsv("C:/Internship/barcode06_all_report.tsv", show_col_types=FALSE)
+
+#this is pre-processing of the newly imported data
+data <- input[complete.cases(input),]
+null <- (nrow(data)>0)
+split_input <- split(input, input$subtype)
+qs_unique <- input[!duplicated(input$subtype),]
+qs_number <- nrow(qs_unique)
+counter <- 1
+for (subtype in names(split_input)) {
+  assign(paste0("df_", counter), split_input[[subtype]])
+  counter <- counter + 1}
+vaf_strings <- data[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+```
+
+# HIV Drug Resistance Report
+
+```{r, echo=FALSE}
+metadata <- data.frame(
+  'Sample Information' = (c("Patient ID: _", as.character(data[1,1]), "assay?", "")),
+  'Time Stamps' = c("Sequencing Start: _", "Sample Collection Date: _", "PCR Date/Time: _", "Library Date?Time: _")
+  )
+
+datatable(
+  metadata,
+  rownames = FALSE,
+  colnames = c("Sample Information", "Time Stamps")
+  )
+
+#SAMPLE METADATA TABLE HERE
+#from all_report: barcode ID
+#other data required: dates
+```
+
+
+### Number of subtypes = `r qs_number`
+
+```{asis, echo=null}
+[PR]{style="color: FireBrick;"} = Protease, [RT]{style="color: FireBrick;"} = Reverse Transcriptase, [IN]{style="color:FireBrick;"} = Integrase
+```
+
+```{asis, eval=colSums(vaf_complete==0)>0}
+[Showing only mutations that appear at a variable allele frequency >1% within their subtype.]{.alert-warning}
+```
+
+```{asis, echo=(qs_number>=1)}
+## Subtype 1
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=1, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_1[1,9]), digits=4), "\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_1[complete.cases(df_1), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_1 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+    # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+      }
+  }
+```
+
+```{asis, echo=(qs_number>=2)}
+## Subtype 2
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=2, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_2[1,9]), digits=4), "\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_2[complete.cases(df_2), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_2 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+        # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  }
+  }
+    
+    
+```
+
+```{asis, echo=(qs_number>=3)}
+## Subtype 3
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=3, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_3[1,9]), digits=4),"\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_3[complete.cases(df_3), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_3 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+        # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+      }
+  }
+```
+
+```{asis, echo=(qs_number>=4)}
+## Subtype 4
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=4, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_4[1,9]), digits=4),"\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_4[complete.cases(df_4), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_4 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  }
+```
+
+```{asis, echo=(qs_number>=5)}
+## Subtype 5
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=5, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_5[1,9]), digits=4), "\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_5[complete.cases(df_5), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    # Removes repeats
+    data_clean <- df_5 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+    # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+    # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  } 
+  }
+    
+    
+```
+
+```{asis, echo=(qs_number>=6)}
+## Subtype 6
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=6, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_6[1,9]), digits=4),"\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_6[complete.cases(df_6), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_6 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+        # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  }
+  }  
+    
+    
+```
+
+```{asis, echo=(qs_number>=7)}
+## Subtype 7
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=7, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_7[1,9]), digits=4),"\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_7[complete.cases(df_7), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_7 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+        # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  }
+  }  
+    
+    
+```
+
+```{asis, echo=(qs_number>=8)}
+## Subtype 8
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=8, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_8[1,9]), digits=4), "\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_8[complete.cases(df_8), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_8 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+        # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  }
+  }  
+    
+    
+```
+
+```{asis, echo=(qs_number>=9)}
+## Subtype 9
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=9, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_9[1,9]), digits=4), "\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_9[complete.cases(df_9), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_9 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+        # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  }
+  }  
+    
+    
+```
+
+```{asis, echo=(qs_number>=10)}
+## Subtype 10
+```
+
+```{r, echo=FALSE, eval=(qs_number)>=10, results='asis'}
+
+cat("Subtype abundance = ", as.character(signif(df_10[1,9]), digits=4), "\n")
+
+# If no DRMs are detected within a quasispecies:
+if (nrow(df_10[complete.cases(df_10), ]) == 0) {
+    cat("No DRMs detected. No resisted drugs.\n")
+  } else {
+    
+    #Removes repeats
+    data_clean <- df_10 %>%
+      filter(!duplicated(paste0(pmax(drugName, mutation), pmin(drugName, mutation))))
+    data_clean <- data_clean[complete.cases(data_clean),]
+    
+    # Processes VAF to get a % within the quasispecies
+    vaf_strings <- data_clean[[11]]
+    split_vaf <- strsplit(vaf_strings, "\\|")
+    processed_vaf <- sapply(split_vaf, `[`, 1)
+    df_processed_vaf <- data.frame(processed_vaf)
+    df_num <- as.numeric(df_processed_vaf[, 1])
+    df_num_per <- df_num * 100
+    df_num_round <- round(df_num_per, digits = 2)
+    vaf_complete <- data.frame(df_num_round)
+    
+        # Assembles data table
+    drug_resistance_data <- data.frame(
+      `Gene` = data_clean[, 2],
+      `Mutation` = data_clean[, 13],
+      `Abundance within Quasispecies` = vaf_complete[, 1],
+      `Drug Name` = data_clean[, 4],
+      `Resistance Level` = data_clean[, 6])
+    
+        # Removes any 0% frequency mutations
+    drug_resistance_data <- filter(drug_resistance_data, Abundance.within.Quasispecies > 0)
+    
+    # Prints message if no mutations are left
+    if (nrow(drug_resistance_data)==0)
+      {cat("No significant DRMs detected. No resisted drugs.\n")} else {
+    
+    # Creates datatable object
+    datatable(
+      drug_resistance_data,
+      rownames = FALSE,
+      colnames = c('Gene', 'Mutation', 'Abundance within Quasispecies', 'Drug Name', 'Resistance Level')
+    ) %>% formatStyle('drugName', fontWeight = 'bold')
+  }
+  }  
+    
+    
+```
+
+## Summary of DRMs
+
+DRM data across all `r qs_number` quasi-species:
+
+```{r, echo=FALSE, eval=null}
+
+#creates dataframes for each mutation
+drm_only <- data %>% filter(!duplicated(paste0(pmax(subtype, mutation), pmin(subtype, mutation))))
+split_drm <- split(drm_only, drm_only$mutation)
+
+all_abundance <- list()
+
+#calculates abundance for each different mutation
+for (mutation in names(split_drm)) {
+
+  drm_vaf_strings <- split_drm[[mutation]][[11]]
+    drm_split_vaf <- strsplit(drm_vaf_strings, "\\|")
+    drm_processed_vaf <- sapply(drm_split_vaf, `[`, 1)
+    drm_df_processed_vaf <- data.frame(drm_processed_vaf)
+    drm_df_num <- as.numeric(drm_df_processed_vaf[, 1])
+    drm_df_num_round <- round(drm_df_num, digits = 5)
+    drm_vaf <- data.frame(drm_df_num_round)
+    
+  drm_abundance <- drm_vaf[,1] * split_drm[[mutation]][,9]
+  drmtotal_abundance <- sum(drm_abundance$abundance)
+
+#adds to the list of dataframes for each mutation
+  all_abundance[[mutation]] <- drmtotal_abundance
+  }
+
+#binds the list into a single data frame and preps it for summary table
+all_abundance_df <- bind_rows(all_abundance)
+all_abundance_df <- all_abundance_df[,order(colnames(all_abundance_df))]
+drm_frequency_complete <- as.data.frame(t(all_abundance_df))
+drm_frequency_complete <- round(drm_frequency_complete, 4)
+
+#set up  and display the summary data with calculated abundance
+unique_mutations <- data[!duplicated(data$mutation),]
+unique_mutations <- unique_mutations[order(unique_mutations$mutation),]
+
+summary_data <- data.frame(
+ `Gene` = unique_mutations[,2],
+ `Mutation` = unique_mutations[,13],
+ `Frequency within sample` = drm_frequency_complete[,1],
+ `Comments` = unique_mutations[,16]
+      )
+
+summary_data <- filter(summary_data, Frequency.within.sample > 0)
+
+datatable(summary_data,
+    rownames = FALSE,
+    colnames = c('Gene', 'Mutation', 'Frequency In Sample', 'Comments'))
+```
+
+```{asis, eval=colSums(drm_frequency_complete==0)>0}
+[Showing only mutations that appear at a variable allele frequency >1% within their subtype.]{.alert-warning}
+```
