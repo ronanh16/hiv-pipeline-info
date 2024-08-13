@@ -1,0 +1,93 @@
+#requires input "_all_report.tsv" to be specified in the first r code chunk
+---
+output: 
+  html_document:
+    css: "report-style.css"
+#requires input "_all_report.tsv" to be specified in the first r code chunk
+---
+
+::: header-container
+<div>
+
+::: header1
+Patient Report
+:::
+
+::: header2
+[Details on the pipeline and how results are generated]
+:::
+
+</div>
+
+<img src="uos-logo.png" class="headerlogo" width="500"/>
+:::
+
+```{r, include=FALSE}
+#this is calling packages and opening data
+library(readr)
+library(kableExtra)
+library(DT)
+library(dplyr)
+library(ggplot2)
+input <- readr::read_tsv("INPUT HERE", show_col_types=FALSE)
+
+#this is pre-processing of the newly imported data
+data <- input[complete.cases(input),]
+null <- (nrow(data)>0)
+split_input <- split(input, input$subtype)
+qs_unique <- input[!duplicated(input$subtype),]
+qs_number <- nrow(qs_unique)
+counter <- 1
+for (subtype in names(split_input)) {
+  assign(paste0("df_", counter), split_input[[subtype]])
+  counter <- counter + 1}
+```
+# HIV Drug Resistance Report
+
+```{r, echo=FALSE}
+metadata <- data.frame(
+  'Sample Information' = (c("Patient ID: _", as.character(data[1,1]), "assay?", "")),
+  'Time Stamps' = c("Sequencing Start: _", "Sample Collection Date: _", "PCR Date/Time: _", "Library Date?Time: _")
+  )
+
+datatable(
+  metadata,
+  rownames = FALSE,
+  colnames = c("Sample Information", "Time Stamps")
+  )
+
+#SAMPLE METADATA TABLE HERE
+#from all_report: barcode ID
+#other data required: dates
+```
+
+## Summary of DRMs
+
+```{r, echo=FALSE, eval=null}
+
+#creates dataframes for each mutation
+drm_only <- data %>% filter(!duplicated(paste0(pmax(subtype, mutation), pmin(subtype, mutation))))
+split_drm <- split(drm_only, drm_only$mutation)
+
+#calculates abundance for each different mutation
+for (mutation in names(split_drm)) {
+
+#WRITE SCRIPT TO ISOLATE VAF COLUMN
+
+#set up  and display the summary data with calculated abundance
+unique_mutations <- data[!duplicated(data$mutation),]
+unique_mutations <- unique_mutations[order(unique_mutations$mutation),]
+
+summary_data <- data.frame(
+ `Gene` = unique_mutations[,2],
+ `Mutation` = unique_mutations[,13],
+ `Frequency within sample` = #NEW VAF COLUMN HERE
+ `Comments` = unique_mutations[,16]
+      )
+
+summary_data <- filter(summary_data, Frequency.within.sample > 0)
+
+datatable(summary_data,
+    rownames = FALSE,
+    colnames = c('Gene', 'Mutation', 'Frequency In Sample', 'Comments'))
+```
