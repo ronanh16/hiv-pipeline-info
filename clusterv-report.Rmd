@@ -1,7 +1,8 @@
+#requires input "_all_report.tsv" to be specified in the first r code chunk
 ---
 output: 
   html_document:
-    css: "letsgo.css"
+    css: "report-style.css"
 ---
 
 ::: header-container
@@ -26,7 +27,8 @@ library(readr)
 library(kableExtra)
 library(DT)
 library(dplyr)
-input <- readr::read_tsv("C:/Internship/barcode06_all_report.tsv", show_col_types=FALSE)
+library(ggplot2)
+input <- readr::read_tsv("INPUT HERE", show_col_types=FALSE)
 
 #this is pre-processing of the newly imported data
 data <- input[complete.cases(input),]
@@ -67,11 +69,88 @@ datatable(
 #other data required: dates
 ```
 
-
 ### Number of subtypes = `r qs_number`
+
+## Summary of DRMs
+
+DRM data across all `r qs_number` quasi-species:
+
+```{asis, eval=colSums(vaf_complete==0)>0}
+[Showing only mutations that appear at a variable allele frequency >1% within their subtype.]{.alert-warning}
+```
+
+```{r, echo=FALSE, eval=null}
+
+#creates dataframes for each mutation
+drm_only <- data %>% filter(!duplicated(paste0(pmax(subtype, mutation), pmin(subtype, mutation))))
+split_drm <- split(drm_only, drm_only$mutation)
+
+all_abundance <- list()
+
+#calculates abundance for each different mutation
+for (mutation in names(split_drm)) {
+
+  drm_vaf_strings <- split_drm[[mutation]][[11]]
+    drm_split_vaf <- strsplit(drm_vaf_strings, "\\|")
+    drm_processed_vaf <- sapply(drm_split_vaf, `[`, 1)
+    drm_df_processed_vaf <- data.frame(drm_processed_vaf)
+    drm_df_num <- as.numeric(drm_df_processed_vaf[, 1])
+    drm_df_num_round <- round(drm_df_num, digits = 5)
+    drm_vaf <- data.frame(drm_df_num_round)
+    
+  drm_abundance <- drm_vaf[,1] * split_drm[[mutation]][,9]
+  drmtotal_abundance <- sum(drm_abundance$abundance)
+
+#adds to the list of dataframes for each mutation
+  all_abundance[[mutation]] <- drmtotal_abundance
+  }
+
+#binds the list into a single data frame and preps it for summary table
+all_abundance_df <- bind_rows(all_abundance)
+all_abundance_df <- all_abundance_df[,order(colnames(all_abundance_df))]
+drm_frequency_complete <- as.data.frame(t(all_abundance_df))
+drm_frequency_complete <- round(drm_frequency_complete, 4)
+
+#set up  and display the summary data with calculated abundance
+unique_mutations <- data[!duplicated(data$mutation),]
+unique_mutations <- unique_mutations[order(unique_mutations$mutation),]
+
+summary_data <- data.frame(
+ `Gene` = unique_mutations[,2],
+ `Mutation` = unique_mutations[,13],
+ `Frequency within sample` = drm_frequency_complete[,1],
+ `Comments` = unique_mutations[,16]
+      )
+
+summary_data <- filter(summary_data, Frequency.within.sample > 0)
+
+datatable(summary_data,
+    rownames = FALSE,
+    colnames = c('Gene', 'Mutation', 'Frequency In Sample', 'Comments'))
+```
 
 ```{asis, echo=null}
 [PR]{style="color: FireBrick;"} = Protease, [RT]{style="color: FireBrick;"} = Reverse Transcriptase, [IN]{style="color:FireBrick;"} = Integrase
+```
+
+# Subtype Breakdown {.tabset}
+
+```{r, echo=FALSE, eval=(qs_number)>=2, out.width="80%", fig.align='center'}
+
+abundance_chart <- data.frame(number=c(1:nrow(qs_unique)), abundance=qs_unique[,9])
+
+all_ds_sums <- c()
+for (i in 1:qs_number) {
+  qs_df <- get(paste0("df_", i))
+  ds_sum <- sum((qs_df)[complete.cases(qs_df),][,5])
+  all_ds_sums <- append(all_ds_sums, ds_sum)
+}
+
+ggplot(data=abundance_chart, aes(x = number, y = abundance, fill = all_ds_sums)) + 
+  geom_col() + 
+  geom_text(aes(label = round(abundance, digits=3), vjust = -1)) +
+  ylim(c(0,1)) +  
+  scale_fill_gradient(name = "Total Drug Resistance Score", limits = c(0, 2000), breaks = c(0, 2000), labels = c("Susceptible", "Resistant"))
 ```
 
 ```{asis, eval=colSums(vaf_complete==0)>0}
@@ -611,63 +690,4 @@ if (nrow(df_10[complete.cases(df_10), ]) == 0) {
   }
   }  
     
-    
-```
-
-## Summary of DRMs
-
-DRM data across all `r qs_number` quasi-species:
-
-```{r, echo=FALSE, eval=null}
-
-#creates dataframes for each mutation
-drm_only <- data %>% filter(!duplicated(paste0(pmax(subtype, mutation), pmin(subtype, mutation))))
-split_drm <- split(drm_only, drm_only$mutation)
-
-all_abundance <- list()
-
-#calculates abundance for each different mutation
-for (mutation in names(split_drm)) {
-
-  drm_vaf_strings <- split_drm[[mutation]][[11]]
-    drm_split_vaf <- strsplit(drm_vaf_strings, "\\|")
-    drm_processed_vaf <- sapply(drm_split_vaf, `[`, 1)
-    drm_df_processed_vaf <- data.frame(drm_processed_vaf)
-    drm_df_num <- as.numeric(drm_df_processed_vaf[, 1])
-    drm_df_num_round <- round(drm_df_num, digits = 5)
-    drm_vaf <- data.frame(drm_df_num_round)
-    
-  drm_abundance <- drm_vaf[,1] * split_drm[[mutation]][,9]
-  drmtotal_abundance <- sum(drm_abundance$abundance)
-
-#adds to the list of dataframes for each mutation
-  all_abundance[[mutation]] <- drmtotal_abundance
-  }
-
-#binds the list into a single data frame and preps it for summary table
-all_abundance_df <- bind_rows(all_abundance)
-all_abundance_df <- all_abundance_df[,order(colnames(all_abundance_df))]
-drm_frequency_complete <- as.data.frame(t(all_abundance_df))
-drm_frequency_complete <- round(drm_frequency_complete, 4)
-
-#set up  and display the summary data with calculated abundance
-unique_mutations <- data[!duplicated(data$mutation),]
-unique_mutations <- unique_mutations[order(unique_mutations$mutation),]
-
-summary_data <- data.frame(
- `Gene` = unique_mutations[,2],
- `Mutation` = unique_mutations[,13],
- `Frequency within sample` = drm_frequency_complete[,1],
- `Comments` = unique_mutations[,16]
-      )
-
-summary_data <- filter(summary_data, Frequency.within.sample > 0)
-
-datatable(summary_data,
-    rownames = FALSE,
-    colnames = c('Gene', 'Mutation', 'Frequency In Sample', 'Comments'))
-```
-
-```{asis, eval=colSums(drm_frequency_complete==0)>0}
-[Showing only mutations that appear at a variable allele frequency >1% within their subtype.]{.alert-warning}
 ```
