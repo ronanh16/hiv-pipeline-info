@@ -23,8 +23,8 @@ for v in 43 55; do
         
         docker run -v "${DIR2}:${DIR2}" quay.io/biocontainers/minimap2:2.9--1 sh -c "minimap2 -a -x map-ont -A 2 -O 24,24 -E 2,2 --secondary=no ${OUTPUTNAME}.ref.fas ${OUTPUTNAME}.trim.fastq > ${OUTPUTNAME}.trim.sam"
         ${TOOLSDIR}/sam2alignment.pl ${OUTPUTNAME}.trim.sam ${TOOLSDIR}/HXB2.790-9417.fas | ${TOOLSDIR}/HomoPoly-check.pl > ${OUTPUTNAME}.trim.align.fas
-        ${TOOLSDIR}/extract-gene.aa.all.2.sh ${OUTPUTNAME}.trim.align.fas
-        ${TOOLSDIR}/extract-gene.na.all.2.sh ${OUTPUTNAME}.trim.align.fas
+        ${TOOLSDIR}/extract-gene.aa.all.sh ${OUTPUTNAME}.trim.align.fas
+        ${TOOLSDIR}/extract-gene.na.all.sh ${OUTPUTNAME}.trim.align.fas
 
         for i in ${OUTPUTNAME}.trim.align.*.?a.csv; do
             BASE2=$(basename $i .csv)
