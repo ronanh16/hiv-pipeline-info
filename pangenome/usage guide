@@ -1,1 +1,10 @@
+Usage Guide
+1)	Download/clone my revised form of the pipeline from the repository
+2)	Set up working directory containing folders named “input”, “output” and “tools”
+3)	pangenome.sh should be in this directory, the other scripts should be in “tools”, the desired input fastq files should be in “input”. “output” should be empty.
+4)	Open docker and ensure sufficient memory limit (I used 64GB but this might be excessive)
+5)	Open pangenome.sh and edit the script to process the barcode of choice
+6)	In terminal, change directory to the desired working directory containing pangenome.sh
+7)	Enter the command “./pangenome.sh”
+Transferable to singularity by replacing docker –run with singularity commands.
 
