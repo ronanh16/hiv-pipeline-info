@@ -5,7 +5,7 @@ export TOOLSDIR="${DIR2}/tools"
 export INPUTDIR="${DIR2}/inputs"
 export OUTPUTDIR="${DIR2}/outputs"
 
-for v in 43 55; do
+for v in SELECT NUMBERS HERE; do
     var=$(printf "%02d" $v)
     BASENAME="${INPUTDIR}/barcode${var}"
     OUTPUTNAME="${OUTPUTDIR}/barcode${var}"
