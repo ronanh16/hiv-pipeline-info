@@ -154,7 +154,7 @@ ggplot(data=abundance_chart, aes(x = number, y = abundance, fill = all_ds_sums))
 ```
 
 ```{asis, eval=colSums(vaf_complete==0)>0}
-[Showing only mutations that appear at a variable allele frequency >1% within their subtype.]{.alert-warning}
+[Showing only mutations that appear at a variable allele frequency >1% within their subtype. If no DRMs appear in a seemingly "resistant" subtype, then any DRMs are too infrequent for consideration.]{.alert-warning}
 ```
 
 ```{asis, echo=(qs_number>=1)}
